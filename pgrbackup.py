@@ -27,7 +27,8 @@ import os
 import sys
 import getpass
 import time
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from subprocess import Popen, PIPE, STDOUT
 
 sleeptime = interval * 60
@@ -77,15 +78,18 @@ while True:
 	backupName = 'Resolve_%s_PostgresDump_%s' % (dbName, wincompliance(timeStamp))
 	savePath = os.path.join(destPath, backupName + '.sqlc')
 	command = '%s -U %s -h %s -F c -f %s %s' % (dumpTool, dbUser, dbHost, savePath, dbName)
+	startDump = datetime.now() 
 	process = Popen(command, universal_newlines=True, stdout=PIPE, stderr=STDOUT, shell=True)
         stdout, stderr = process.communicate()
+        endDump = datetime.now()
+        backupDuration = int(math.ceil(timedelta.total_seconds(endDump-startDump))) # Duration of pg_dump operation, in seconds (rounded up)
         print stdout
         print stderr
         print backupName + ' saved'
 
 	# Write a log entry
 	logfile = open(logPath, 'a')
-	logfile.write('Created %s.sqlc'%backupName)
+	logfile.write('Created %s.sqlc in %s seconds'% (backupName, backupDuration))
 	logfile.write(eol)
 	logfile.close()
 	
